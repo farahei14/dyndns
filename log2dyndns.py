@@ -10,7 +10,7 @@ from BeautifulSoup import BeautifulSoup
 import re
 import random
 
-username = ('account')
+username = ['account']
 password = 'password'
 page_home = 'https://account.dyn.com'
 page_myhosts = 'My Hosts'
@@ -53,7 +53,6 @@ def log2dyndns(pageweb,identifiant,mot2passe):
 		if regex.match(ligne):
 			check_state = "vrai"
 			break
-	#showdyndns_hosts()
 
 	req = br.follow_link(text='My Hosts')
 	data_html = req.read()
