@@ -38,7 +38,7 @@ def log2dyndns(pageweb,identifiant,mot2passe):
 	for form in br.forms():
 		if "submit=Log in" in str(form):
 			br.select_form(nr=counter)
-	counter += 1
+		counter += 1
 
 	# Connexion avec le login / mdp
 	br.form['username'] = identifiant
@@ -56,13 +56,39 @@ def log2dyndns(pageweb,identifiant,mot2passe):
 
 	req = br.follow_link(text='My Hosts')
 	data_html = req.read()
+
+  # On cherche le nombre d'adresse dyndns disponible
+	nb_host = re.search(r'You have <strong>(\w)', data_html)
+	if nb_host:
+		nb_host = int(re.sub(r'You have <strong>','', nb_host.group(0)))
+	else:
+		nb_host = 0
+
+	print identifiant, ':', nb_host, 'remaining hosts'
+
+	# On affiche la liste des hosts si nb_host < 2
+	if nb_host < 2:
+		data_html = re.sub(r'\n','',data_html)
+		for m in re.finditer(r'<td><a href="/dns/dyndns/(.*)\.dyndns\.org">.*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*</td>',data_html):
+			tableau = re.sub(r'</table>.*','',m.group())
+			tableau = re.sub(r'<tr>','',tableau)
+			tableau = re.sub(r'<td>','',tableau)
+			tableau = re.sub(r'</tr>','\n',tableau)
+			tableau = re.sub(r'<td class="hideid">\d*</td>','',tableau)
+			tableau = re.sub(r'</a></td><td class="mobileHide">',' ',tableau)
+			tableau = re.sub(r'</td>',' ',tableau)
+			tableau = re.sub(r'<a.*">','',tableau)
+
+			print tableau
+
 	br.follow_link(text='Log Out')
 	mechanize.CookieJar.clear
 	return check_state
 
 for etab in username:
-	result = log2dyndns(page_home,etab,password)
-	if result == "vrai":
-		print "Mise a jour de", etab, "réussi"
-	else:
-		print "Mise à jour de", etab, "FAILED"
+	log2dyndns(page_home,etab,password)
+	#result = log2dyndns(page_home,etab,password)
+	#if result == "vrai":
+	#	print "Mise a jour de", etab, "réussi"
+	#else:
+	#	print "Mise à jour de", etab, "FAILED"
