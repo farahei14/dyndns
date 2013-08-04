@@ -9,13 +9,24 @@ apt-get install python-mechanize
 ```
 
 ## Paramétrage
-Il faut éditer le script et modifier les paramètres ```username``` et ```password``` comme ceci :
-```python
-username = ['account']
-password = 'password'
-```
+La configuration se fait dans le fichier dyndns.conf. Le format du fichier est décrit à l'intérieure.
 
 ## Utilisation
 ```bash
-./log2dyndns.py
+$ ./dyndns
+usage: dyndns [-h] [-u USER] [-p PASSWORD] [--update] [-d]
+
+Update Dyndns account and retrieve some usefull data.
+
+optional arguments:
+  -h, --help   show this help message and exit
+  -u USER      dyndns account (required)
+  -p PASSWORD  dyndns password (required)
+  --update     update only, do not retrieve anything (optionnal)
+  -d           use dictionnary, you need to create dyndns.conf file
+               (optionnal)
 ```
+
+## Note
+
+Ce script a été écrit en grande partie par un potes et vue qu'il va mettre 10 ans pour se créer un compte, je host son projet chez moi.
