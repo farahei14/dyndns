@@ -6,6 +6,7 @@ Ce script permet de se connecter à l'ensemble de vos comptes dyndns.
 Ce projet utilise le module python mechanize. Sur une Debian, on l'installe de cette manière :
 ```bash
 apt-get install python-mechanize
+apt-get install python-beautifulsoup
 ```
 
 ## Paramétrage
