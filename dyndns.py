@@ -139,7 +139,7 @@ def get_data(user,password,listing):
         if listing == True:
             print laclass.getState()
         else:
-            print "user", laclass.getAccount(),"update successfully"
+            print "Successfully connected with", laclass.getAccount(),"account."
     else:
         print "Can't retrieve data with user", laclass.getAccount()
 
