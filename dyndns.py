@@ -8,6 +8,7 @@ import mechanize
 from BeautifulSoup import BeautifulSoup
 import socket # pour interrogation dns
 import urllib # pour l'update, mechanize bug pour faire un simple get ...
+import time # pour ameliorer le format de la date
 
 class bcolors:
     '''
@@ -190,6 +191,8 @@ class log2dyndns(object):
                 hostname = list_hostname[i+1]
                 ip_addr = list_hostname[i+3]
                 last_seen = list_hostname[i+4]
+                last_seen = time.strptime(last_seen,"%b. %d, %Y %I:%M %p")
+                last_seen = time.strftime("%d/%m/%Y %H:%M UTC+5",last_seen)
 
                 reports += bcolors.OKGREEN+hostname.rjust(nombre_de_caracter_colonne1)+bcolors.ENDC
                 reports += bcolors.OKGREEN+ip_addr.rjust(nombre_de_caracter_colonne2)+bcolors.ENDC
