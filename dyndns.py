@@ -9,17 +9,54 @@ from BeautifulSoup import BeautifulSoup
 import socket # pour interrogation dns
 import urllib # pour l'update, mechanize bug pour faire un simple get ...
 
+class bcolors:
+    '''
+
+        Pour la coloration de la sortie standard.
+
+    '''
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
+    def disable(self):
+        self.HEADER = ''
+        self.OKBLUE = ''
+        self.OKGREEN = ''
+        self.WARNING = ''
+        self.FAIL = ''
+        self.ENDC = ''
+
 # DEBUT DE LA CLASSE
 class log2dyndns(object):
     def __init__(self):
+        '''
+
+            Constructeur : permet d'initialiser certaines variables.
+
+        '''
         self.version = '1.0'
         self.site = 'https://account.dyn.com'
         self.checkip_site = 'http://checkip.dyndns.org'
 
     def setAccount(self,account):
+        '''
+
+            Accepte un compte en entree et permet d'initialiser la variable account qui sera disponible a l'ensemble
+            de la class via la variable self.account.
+
+        '''
         self.account = account
 
     def getAccount(self):
+        '''
+
+            Cette methode permet de recuperer le contenu de la variable self.account depuis l'exterieure de la class.
+
+        '''
         return self.account
 
     def setPassword(self,password):
@@ -126,26 +163,26 @@ class log2dyndns(object):
         # deconnexion
         self.br.follow_link(text='Log Out')
         mechanize.CookieJar.clear
-
-        # affichage du nombre d'hote et de la liste de ces hotes
-        print "\nHosts for", self.account, ":", count_host
-
         
         nombre_de_caracter_colonne1 = 24
         nombre_de_caracter_colonne2 = 20
         nombre_de_caracter_colonne3 = 30
         nombre_de_tiret = nombre_de_caracter_colonne1 + nombre_de_caracter_colonne2 + nombre_de_caracter_colonne3
 
+        # affichage du nombre d'hote et de la liste de ces hotes
+        reports_nbhosts = "\n"+bcolors.HEADER+self.account+" ("+bcolors.ENDC+bcolors.OKGREEN+str(count_host)+" hosts"+bcolors.ENDC+bcolors.HEADER+")"+bcolors.ENDC
+        print reports_nbhosts.rjust(nombre_de_tiret)
+
         reports = ""
         if count_host > 0:
             
-            reports += nombre_de_tiret*"-"
+            reports += bcolors.OKBLUE+nombre_de_tiret*"-"+bcolors.ENDC
             reports += "\n"
-            reports += 'Hostname'.rjust(nombre_de_caracter_colonne1)
-            reports += 'Ip adress'.rjust(nombre_de_caracter_colonne2)
-            reports += 'Last seen'.rjust(nombre_de_caracter_colonne3)
+            reports += bcolors.HEADER+'Hostname'.rjust(nombre_de_caracter_colonne1)+bcolors.ENDC
+            reports += bcolors.HEADER+'Ip adress'.rjust(nombre_de_caracter_colonne2)+bcolors.ENDC
+            reports += bcolors.HEADER+'Last seen'.rjust(nombre_de_caracter_colonne3)+bcolors.ENDC
             reports += "\n"
-            reports += nombre_de_tiret*"-"
+            reports += bcolors.OKBLUE+nombre_de_tiret*"-"+bcolors.ENDC
             reports += "\n"
             item = 0
             i = 0
@@ -154,15 +191,15 @@ class log2dyndns(object):
                 ip_addr = list_hostname[i+3]
                 last_seen = list_hostname[i+4]
 
-                reports += hostname.rjust(nombre_de_caracter_colonne1)
-                reports += ip_addr.rjust(nombre_de_caracter_colonne2)
-                reports += last_seen.rjust(nombre_de_caracter_colonne3)
+                reports += bcolors.OKGREEN+hostname.rjust(nombre_de_caracter_colonne1)+bcolors.ENDC
+                reports += bcolors.OKGREEN+ip_addr.rjust(nombre_de_caracter_colonne2)+bcolors.ENDC
+                reports += bcolors.OKGREEN+last_seen.rjust(nombre_de_caracter_colonne3)+bcolors.ENDC
                 reports += "\n"
 
                 i += 5
                 item += 1
 
-            reports += nombre_de_tiret*"-"
+            reports += bcolors.OKBLUE+nombre_de_tiret*"-"+bcolors.ENDC
             reports += "\n"
 
         return reports
@@ -173,12 +210,22 @@ class log2dyndns(object):
 import argparse
 
 def update_data(user,password,hostname):
-  myupdate = log2dyndns()
-  myupdate.setAccount(user)
-  myupdate.setPassword(password)
-  myupdate.doUpdate(hostname)
+    '''
+
+        Recupere en entree le compte dyndns, le password et le nom de domaine a mettre a jour.
+
+    '''
+    myupdate = log2dyndns()
+    myupdate.setAccount(user)
+    myupdate.setPassword(password)
+    myupdate.doUpdate(hostname)
 
 def get_data(user,password,listing):
+    '''
+
+        Recupere en entree le compte dydns, le password et le parametre listing (qui permet de lancer la procedure de listing ou pas).
+
+    '''
     laclass = log2dyndns()
     laclass.setSite('https://account.dyn.com')
     laclass.setAccount(user)
@@ -194,6 +241,11 @@ def get_data(user,password,listing):
         print "Can't retrieve data with user", laclass.getAccount()
 
 def get_data_from_files(listing):
+    '''
+
+        Lit le fichier dyndns.conf et recurpere les couples login/password pour les envoyer a la fonction get_data.
+
+    '''
     comptes = {}
 
     file = open("dyndns.conf")
@@ -219,6 +271,11 @@ def get_data_from_files(listing):
         get_data(compte,password,listing)
 
 def main():
+    '''
+
+        La fonction principale permet d'aiguiller les options de la ligne de commande aux fonctions intermediaires.
+
+    '''
     parser = argparse.ArgumentParser(add_help=True,description='Manage your Dyndns Account.')
 
     parser.add_argument('-u', action="store", dest='user', help='dyndns account (required)', default='None')
