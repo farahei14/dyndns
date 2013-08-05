@@ -239,9 +239,9 @@ def get_data(user,password,listing):
         if listing == True:
             print laclass.getState()
         else:
-            print "Successfully connected with", laclass.getAccount(),"account."
+            print bcolors.OKGREEN+"Successfully connected with "+laclass.getAccount()+bcolors.ENDC
     else:
-        print "Can't retrieve data with user", laclass.getAccount()
+        print bcolors.FAIL+"Can't retrieve data with user "+laclass.getAccount()+". Wrong login or password."+bcolors.ENDC
 
 def get_data_from_files(listing):
     '''
