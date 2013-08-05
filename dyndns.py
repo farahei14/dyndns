@@ -281,14 +281,14 @@ def main():
     '''
     parser = argparse.ArgumentParser(add_help=True,description='Manage your Dyndns Account.')
 
-    parser.add_argument('-u', action="store", dest='user', help='dyndns account (required)', default='None')
-    parser.add_argument('-p', action="store", dest='password', help='dyndns password (required)', default='None')
-    parser.add_argument('--hostname', action="store", dest='hostname', help='dns domain name of your host (use only with --create, --delete, --update options)', default='None')
-    parser.add_argument('--create', action="store_true", dest='create_hostname', help='create a domain name for your host on dyndns (optionnal)', default='None')
-    parser.add_argument('--delete', action="store_true", dest='delete_hostname', help='delete an existing domain name on your dyndns account (optionnal)', default='None')
-    parser.add_argument('--update', action="store_true", dest='update_hostname', help='update ip address of your host on dyndns (optionnal)', default='None')
-    parser.add_argument('-l','--list', action="store_true", dest="listing", help="list hosts on your account (optionnal)", default=False)
-    parser.add_argument('-c', '--config', action="store_true", dest="dictionnaire", help='use dictionnary, you need to create dyndns.conf file (optionnal)', default=False)
+    parser.add_argument('-u','--user', action="store", dest='user', help='dyndns account (required)', default='None')
+    parser.add_argument('-p','--password', action="store", dest='password', help='dyndns password (required)', default='None')
+    parser.add_argument('-H','--hostname', action="store", dest='hostname', help='dns domain name of your host (use only with --create, --delete, --update options)', default='None')
+    parser.add_argument('-C','--create', action="store_true", dest='create_hostname', help='create a domain name for your host on dyndns (optionnal)', default='None')
+    parser.add_argument('-D','--delete', action="store_true", dest='delete_hostname', help='delete an existing domain name on your dyndns account (optionnal)', default='None')
+    parser.add_argument('-U','--update', action="store_true", dest='update_hostname', help='update ip address of your host on dyndns (optionnal)', default='None')
+    parser.add_argument('-L','--list', action="store_true", dest="listing", help="list hosts on your account (optionnal)", default=False)
+    parser.add_argument('-F', '--file', action="store_true", dest="dictionnaire", help='use dictionnary, you need to create dyndns.conf file (optionnal)', default=False)
 
     args = parser.parse_args()
 
