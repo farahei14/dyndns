@@ -15,17 +15,26 @@ La configuration se fait dans le fichier dyndns.conf. Le format du fichier est d
 ## Utilisation
 ```bash
 $ ./dyndns
-usage: dyndns [-h] [-u USER] [-p PASSWORD] [--update] [-d]
+usage: dyndns [-h] [-u USER] [-p PASSWORD] [--hostname HOSTNAME] [--create]
+              [--delete] [--update] [-l] [-c]
 
-Update Dyndns account and retrieve some usefull data.
+Manage your Dyndns Account.
 
 optional arguments:
-  -h, --help   show this help message and exit
-  -u USER      dyndns account (required)
-  -p PASSWORD  dyndns password (required)
-  --update     update only, do not retrieve anything (optionnal)
-  -d           use dictionnary, you need to create dyndns.conf file
-               (optionnal)
+  -h, --help           show this help message and exit
+  -u USER              dyndns account (required)
+  -p PASSWORD          dyndns password (required)
+  --hostname HOSTNAME  dns domain name of your host (use only with --create,
+                       --delete, --update options)
+  --create             create a domain name for your host on dyndns
+                       (optionnal)
+  --delete             delete an existing domain name on your dyndns account
+                       (optionnal)
+  --update             update ip address of your host on dyndns (optionnal)
+  -l, --list           list hosts on your account (optionnal)
+  -c, --config         use dictionnary, you need to create dyndns.conf file
+                       (optionnal)
+
 ```
 
 ## Note
