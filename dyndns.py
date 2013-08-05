@@ -216,7 +216,7 @@ def get_data_from_files(listing):
             password = re.sub(r'\n','',password)
             comptes[account] = password
     for compte, password in comptes.items():
-        get_data(compte,password,update_only)
+        get_data(compte,password,listing)
 
 def main():
     parser = argparse.ArgumentParser(add_help=True,description='Manage your Dyndns Account.')
@@ -233,7 +233,7 @@ def main():
     args = parser.parse_args()
 
     if args.dictionnaire == True:
-        get_data_from_files(args.connect_only)
+        get_data_from_files(args.listing)
     elif args.update_hostname == True and args.hostname != 'None':
       update_data(args.user,args.password,args.hostname)
     elif args.user == 'None' or args.password == 'None':
