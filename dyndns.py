@@ -128,7 +128,7 @@ class log2dyndns(object):
 # DEBUT DU SCRIPT
 import argparse
 
-def get_data(user,password,update_only):
+def get_data(user,password,listing):
     laclass = log2dyndns()
     laclass.setSite('https://account.dyn.com')
     laclass.setAccount(user)
@@ -136,14 +136,14 @@ def get_data(user,password,update_only):
     laclass.doConnect()
 
     if laclass.isConnect() == "True":
-        if update_only == False:
+        if listing == True:
             print laclass.getState()
         else:
             print "user", laclass.getAccount(),"update successfully"
     else:
         print "Can't retrieve data with user", laclass.getAccount()
 
-def get_data_from_files(update_only):
+def get_data_from_files(listing):
     comptes = {}
 
     file = open("dyndns.conf")
@@ -169,12 +169,16 @@ def get_data_from_files(update_only):
         get_data(compte,password,update_only)
 
 def main():
-    parser = argparse.ArgumentParser(add_help=True,description='Update Dyndns account and retrieve some usefull data.')
+    parser = argparse.ArgumentParser(add_help=True,description='Manage your Dyndns Account.')
 
-    user = parser.add_argument('-u', action="store", dest='user', help='dyndns account (required)', default='None')
-    password = parser.add_argument('-p', action="store", dest='password', help='dyndns password (required)', default='None')
-    parser.add_argument('--update', action="store_true", dest='connect_only', help='update only, do not retrieve anything (optionnal)', default=False)
-    parser.add_argument('-d', action="store_true", dest="dictionnaire", help='use dictionnary, you need to create dyndns.conf file (optionnal)', default=False)
+    parser.add_argument('-u', action="store", dest='user', help='dyndns account (required)', default='None')
+    parser.add_argument('-p', action="store", dest='password', help='dyndns password (required)', default='None')
+    parser.add_argument('--hostname', action="store", dest='hostname', help='dns domain name of your host (use only with --create, --delete, --update options)', default='None')
+    parser.add_argument('--create', action="store_true", dest='create_hostname', help='create a domain name for your host on dyndns (optionnal)', default='None')
+    parser.add_argument('--delete', action="store_true", dest='delete_hostname', help='delete an existing domain name on your dyndns account (optionnal)', default='None')
+    parser.add_argument('--update', action="store_true", dest='update_hostname', help='update ip address of your host on dyndns (optionnal)', default='None')
+    parser.add_argument('-l','--list', action="store_true", dest="listing", help="list hosts on your account (optionnal)", default=False)
+    parser.add_argument('-c', '--config', action="store_true", dest="dictionnaire", help='use dictionnary, you need to create dyndns.conf file (optionnal)', default=False)
 
     args = parser.parse_args()
 
@@ -183,7 +187,7 @@ def main():
     elif args.user == 'None' or args.password == 'None':
         print parser.parse_args(['-h'])
     else:
-        get_data(args.user,args.password,args.connect_only)
+        get_data(args.user,args.password,args.listing)
 
 
 if __name__ == "__main__":
