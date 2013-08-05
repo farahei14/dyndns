@@ -6,11 +6,15 @@ import re
 import random
 import mechanize 
 from BeautifulSoup import BeautifulSoup
+import socket # pour interrogation dns
+import urllib # pour l'update, mechanize bug pour faire un simple get ...
 
 # DEBUT DE LA CLASSE
 class log2dyndns(object):
     def __init__(self):
         self.version = '1.0'
+        self.site = 'https://account.dyn.com'
+        self.checkip_site = 'http://checkip.dyndns.org'
 
     def setAccount(self,account):
         self.account = account
@@ -44,6 +48,46 @@ class log2dyndns(object):
         self.br.form['username'] = self.account
         self.br.form['password'] = self.password
         self.html = self.br.submit().read()
+
+    def doUpdate(self,dnsdomainname):
+        # si changement, envoie de la modification
+        # recuperation du code retour
+        # si maj ok -> ok
+        # si maj non ok -> authentification ?
+        # si maj non ok -> je recommence 3 fois toute les 5 secondes et notification
+        br = mechanize.Browser()
+        r = br.open(self.checkip_site)
+        html = r.read()
+        current_ipaddress = re.sub(r'\n','',html)
+        current_ipaddress = re.sub(r'^.*: ','',current_ipaddress)
+        current_ipaddress = re.sub(r'<.*$','',current_ipaddress)
+        resolv_dnsdomain = socket.gethostbyname(dnsdomainname)
+
+        # check si on doit le faire pour ne pas incrementer le compteur 'abuse' de dyndns.org
+        if current_ipaddress == resolv_dnsdomain:
+            print "You don't need to update", dnsdomainname+". Your current IP address :", resolv_dnsdomain
+        else:
+            # ben on update
+            # je dois appeler ce lien http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
+            #link_update = "https://"+self.account+":"+self.password+"@members.dyndns.org/nic/update?hostname="+dnsdomainname+"&myip="+current_ipaddress+"&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG"
+            link_update = "https://"+self.account+":"+self.password+"@members.dyndns.org/nic/update?hostname="+dnsdomainname+"&myip="+current_ipaddress+"&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG" 
+            opener = urllib.FancyURLopener()
+            code_erreur = opener.open(link_update).read()
+            # la, il faut tous les tester
+            # good -> ok
+            # nochg -> ok mais on ne devrait jamais tomber sur cette erreur
+            # notfqdn -> pas ok, la valeur du dnsdomainname n'est pas un fqdn
+            # nohost -> pas ok, cas d'une faute de frappe ou d'un domain qui n'est pas sur le bon compte
+            # numhost -> pas gerer, je ne comprends cette erreur
+            # abuse -> pas ok du tout, le compte est bloque
+            if re.search('good.*$',code_erreur):
+                newip = re.sub('good ','',code_erreur)
+                return "Update successfull !!! New IP address is "+newip+" for "+dnsdomainname
+            elif re.search('nochg.*$',code_erreur):
+                baseip = re.sub('nochg ','',code_erreur)
+                return "No need to change your IP !!! Your current IP address is "+baseip+" for "+dnsdomainname
+            else:
+                return code_erreur
 
     def isConnect(self):
         check_state = "False"
@@ -128,6 +172,12 @@ class log2dyndns(object):
 # DEBUT DU SCRIPT
 import argparse
 
+def update_data(user,password,hostname):
+  myupdate = log2dyndns()
+  myupdate.setAccount(user)
+  myupdate.setPassword(password)
+  myupdate.doUpdate(hostname)
+
 def get_data(user,password,listing):
     laclass = log2dyndns()
     laclass.setSite('https://account.dyn.com')
@@ -184,6 +234,8 @@ def main():
 
     if args.dictionnaire == True:
         get_data_from_files(args.connect_only)
+    elif args.update_hostname == True and args.hostname != 'None':
+      update_data(args.user,args.password,args.hostname)
     elif args.user == 'None' or args.password == 'None':
         print parser.parse_args(['-h'])
     else:
