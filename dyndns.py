@@ -301,8 +301,8 @@ def update_data(user,password,hostname,sendmail,local_mail,remote_mail):
         send_email.setSmtpServer(config.smtp_server)
 
         if local_mail == 'None' and remote_mail == 'None':
-            send_email.setLocalMailAddress(local_mail)
-            send_email.setRemoteMailAddress(remote_mail)
+            send_email.setLocalMailAddress(config.local_mail)
+            send_email.setRemoteMailAddress(config.remote_mail)
         elif local_mail == 'None' and remote_mail != 'None':
             send_email.setLocalMailAddress(config.local_mail)
             send_email.setRemoteMailAddress(remote_mail)
@@ -310,8 +310,8 @@ def update_data(user,password,hostname,sendmail,local_mail,remote_mail):
             send_email.setLocalMailAddress(local_mail)
             send_email.setRemoteMailAddress(config.remote_mail)
         else:    
-            send_email.setLocalMailAddress(config.local_mail)
-            send_email.setRemoteMailAddress(config.remote_mail)
+            send_email.setLocalMailAddress(local_mail)
+            send_email.setRemoteMailAddress(remote_mail)
 
         if re.search('Update successfull.*$',code_erreur):
             subject = 'Update of '+hostname+' successfull.'
