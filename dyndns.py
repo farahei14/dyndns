@@ -9,6 +9,65 @@ from BeautifulSoup import BeautifulSoup
 import socket # pour interrogation dns
 import urllib # pour l'update, mechanize bug pour faire un simple get ...
 import time # pour ameliorer le format de la date
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+
+class notifyBySmtp:
+    def __init__(self):
+        self.smtp_server = 'localhost'
+        self.local_mail_address = 'toto@localhost'
+        self.remote_mail_address = 'toto@gmail.com'
+        self.subject = 'un sujet quoi !!!'
+        self.text = 'hello'
+
+    def setSmtpServer(self,smtpserver):
+        self.smtp_server = smtpserver
+
+    def getSmtpServer(self):
+        return self.smtp_server
+
+    def setLocalMailAddress(self,mail):
+        self.local_mail_address = mail
+
+    def getLocalMailAddress(self):
+        return self.local_mail_address
+
+    def setRemoteMailAddress(self,mail):
+        self.remote_mail_address = mail
+
+    def getLocalMailAddress(self):
+        return self.local_mail_address
+
+    def setSubject(self,subject):
+        self.subject = subject
+
+    def getSubject(self):
+        return self.subject
+    
+    def setText(self,text):
+        self.text = text
+
+    def getText(self):
+        return self.text
+    
+    def sendmail(self):
+       # Create message container - the correct MIME type is multipart/alternative.
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = self.subject
+        msg['From'] = self.local_mail_address
+        msg['To'] = self.remote_mail_address
+
+        # Record the MIME types of both parts - text/plain and text/html.
+        message = MIMEText(self.text, 'plain')
+        msg.attach(message)
+
+        # Send the message via local SMTP server.
+        s = smtplib.SMTP(self.smtp_server)
+        s.sendmail(self.local_mail_address, self.remote_mail_address, msg.as_string())
+        s.quit() 
+
 
 class bcolors:
     '''
@@ -103,7 +162,7 @@ class log2dyndns(object):
 
         # check si on doit le faire pour ne pas incrementer le compteur 'abuse' de dyndns.org
         if current_ipaddress == resolv_dnsdomain:
-            print "You don't need to update", dnsdomainname+". Your current IP address :", resolv_dnsdomain
+            return "You don't need to update", dnsdomainname+". Your current IP address :", resolv_dnsdomain
         else:
             # ben on update
             # je dois appeler ce lien http://username:password@members.dyndns.org/nic/update?hostname=yourhostname&myip=ipaddress&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG
@@ -216,7 +275,7 @@ class log2dyndns(object):
 # DEBUT DU SCRIPT
 import argparse
 
-def update_data(user,password,hostname):
+def update_data(user,password,hostname,local_mail,remote_mail):
     '''
 
         Recupere en entree le compte dyndns, le password et le nom de domaine a mettre a jour.
@@ -225,7 +284,25 @@ def update_data(user,password,hostname):
     myupdate = log2dyndns()
     myupdate.setAccount(user)
     myupdate.setPassword(password)
-    myupdate.doUpdate(hostname)
+    code_erreur = myupdate.doUpdate(hostname)
+
+    if local_mail != 'None' and remote_mail != 'None':
+        send_email = notifyBySmtp
+        send_email.setLocalMailAddress(local_mail)
+        send_email.setRemoteMailAddress(remote_mail)
+        
+        if re.search('Update successfull.*$',code_erreur):
+            subject = 'Update of '+hostname+' successfull.'
+        elif re.search('No need.*$',code_erreur):
+            subject = 'No need to update '+hostname
+        else:
+            subject = 'Nothings good for '+hostname
+
+        send_email.setSubject(subject)
+        send_email.setText(code_erreur)
+        send_email.sendmail()
+
+    print code_erreur
 
 def get_data(user,password,listing):
     '''
@@ -293,13 +370,15 @@ def main():
     parser.add_argument('-U','--update', action="store_true", dest='update_hostname', help='update ip address of your host on dyndns (optionnal)', default='None')
     parser.add_argument('-L','--list', action="store_true", dest="listing", help="list hosts on your account (optionnal)", default=False)
     parser.add_argument('-F', '--file', action="store_true", dest="dictionnaire", help='use dictionnary, you need to create dyndns.conf file (optionnal)', default=False)
+    parser.add_argument('--local_mail', action="store", dest='localmail', help='mail adress local', default='None')
+    parser.add_argument('--remote_mail', action="store", dest='remotemail', help='mail adress remote', default='None')
 
     args = parser.parse_args()
 
     if args.dictionnaire == True:
         get_data_from_files(args.listing)
     elif args.update_hostname == True and args.hostname != 'None':
-      update_data(args.user,args.password,args.hostname)
+      update_data(args.user,args.password,args.hostname,args.localmail,args.remotemail)
     elif args.user == 'None' or args.password == 'None':
         print parser.parse_args(['-h'])
     else:
