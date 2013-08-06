@@ -171,8 +171,12 @@ class log2dyndns(object):
         nombre_de_tiret = nombre_de_caracter_colonne1 + nombre_de_caracter_colonne2 + nombre_de_caracter_colonne3
 
         # affichage du nombre d'hote et de la liste de ces hotes
-        reports_nbhosts = "\n"+bcolors.HEADER+self.account+" ("+bcolors.ENDC+bcolors.OKGREEN+str(count_host)+" hosts"+bcolors.ENDC+bcolors.HEADER+")"+bcolors.ENDC
-        print reports_nbhosts.rjust(nombre_de_tiret)
+        reports_nbhosts = bcolors.HEADER+self.account+" ["+bcolors.ENDC+bcolors.OKGREEN+str(count_host)+" hosts"+bcolors.ENDC+bcolors.HEADER+"]"+bcolors.ENDC
+        nombre_space = nombre_de_tiret-len(reports_nbhosts)+27
+        if count_host > 0:
+            print "\n"+nombre_space*" "+reports_nbhosts
+        else:
+            print "\n"+bcolors.OKGREEN+"No hostname on "+self.account+bcolors.ENDC
 
         reports = ""
         if count_host > 0:
@@ -180,7 +184,7 @@ class log2dyndns(object):
             reports += bcolors.OKBLUE+nombre_de_tiret*"-"+bcolors.ENDC
             reports += "\n"
             reports += bcolors.HEADER+'Hostname'.rjust(nombre_de_caracter_colonne1)+bcolors.ENDC
-            reports += bcolors.HEADER+'Ip adress'.rjust(nombre_de_caracter_colonne2)+bcolors.ENDC
+            reports += bcolors.HEADER+'Ip address'.rjust(nombre_de_caracter_colonne2)+bcolors.ENDC
             reports += bcolors.HEADER+'Last seen'.rjust(nombre_de_caracter_colonne3)+bcolors.ENDC
             reports += "\n"
             reports += bcolors.OKBLUE+nombre_de_tiret*"-"+bcolors.ENDC
