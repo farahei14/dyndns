@@ -22,6 +22,12 @@ class configurationFile:
         self.smtp_server = config.get('smtp', 'smtp_server')
         self.local_mail = config.get('smtp', 'local_mail')
         self.remote_mail = config.get('smtp', 'remote_mail')
+        self.mail_subject_change_ok = config.get('smtp', 'mail_subject_change_ok')
+        self.mail_subject_no_change = config.get('smtp','mail_subject_no_change')
+        self.mail_subject_on_error = config.get('smtp','mail_subject_on_error')
+        self.mail_text_change_ok = config.get('smtp', 'mail_text_change_ok')
+        self.mail_text_no_change = config.get('smtp','mail_text_no_change')
+        self.mail_text_on_error = config.get('smtp','mail_text_on_error')
 
 class notifyBySmtp:
     def __init__(self):
@@ -314,14 +320,29 @@ def update_data(user,password,hostname,sendmail,local_mail,remote_mail):
             send_email.setRemoteMailAddress(remote_mail)
 
         if re.search('Update successfull.*$',code_erreur):
-            subject = 'Update of '+hostname+' successfull.'
+            subject = config.mail_subject_change_ok
+            message = config.mail_text_change_ok
         elif re.search('No need.*$',code_erreur):
-            subject = 'No need to update '+hostname
+            subject = config.mail_subject_no_change
+            message = config.mail_text_no_change
         else:
-            subject = 'Nothings good for '+hostname
+            subject = config.mail_subject_on_error
+            message = config.mail_text_on_error
+
+        # je n'ai pas l'adresse ip, je dois la calculer a partir du code d'erreur
+        ip_addr = re.sub(r'^.* is ','',code_erreur)
+        ip_addr = re.sub(r' for.*$','',ip_addr)
+
+        # prise en compte des templates
+        subject = re.sub(r'{hostname}',hostname,subject)
+        subject = re.sub(r'{ip}',ip_addr,subject)
+        message = re.sub(r'{hostname}',hostname,message)
+        message = re.sub(r'{ip}',ip_addr,message)
+        message = re.sub(r'\\n','\n',message)
+        message = message+"\n\nLog :\n"+code_erreur
 
         send_email.setSubject(subject)
-        send_email.setText(code_erreur)
+        send_email.setText(message)
         send_email.sendmail()
 
     print code_erreur
