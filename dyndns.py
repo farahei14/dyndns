@@ -287,7 +287,7 @@ def update_data(user,password,hostname,local_mail,remote_mail):
     code_erreur = myupdate.doUpdate(hostname)
 
     if local_mail != 'None' and remote_mail != 'None':
-        send_email = notifyBySmtp
+        send_email = notifyBySmtp()
         send_email.setLocalMailAddress(local_mail)
         send_email.setRemoteMailAddress(remote_mail)
         
