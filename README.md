@@ -1,6 +1,6 @@
-# Projet LOG2DYNDNS
+# Dyndns
 
-Ce script permet de se connecter à l'ensemble de vos comptes dyndns.
+Ce script permet de gérer l'ensemble de vos comptes dyndns.
 
 ## Pré-requis
 Ce projet utilise le module python mechanize. Sur une Debian, on l'installe de cette manière :
@@ -10,7 +10,7 @@ apt-get install python-beautifulsoup
 ```
 
 ## Paramétrage
-La configuration se fait dans le fichier dyndns.conf. Le format du fichier est décrit à l'intérieure.
+La configuration se fait dans le fichier dyndns.cfg et dans le fichier dyndns.conf pour les comptes.
 
 ## Utilisation
 ```bash
