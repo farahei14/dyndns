@@ -12,7 +12,16 @@ import time # pour ameliorer le format de la date
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import ConfigParser
 
+class configurationFile:
+    def __init__(self):
+        config = ConfigParser.RawConfigParser()
+        config.read('dyndns.cfg')
+        self.account_file = config.get('main', 'account_file')
+        self.smtp_server = config.get('smtp', 'smtp_server')
+        self.local_mail = config.get('smtp', 'local_mail')
+        self.remote_mail = config.get('smtp', 'remote_mail')
 
 class notifyBySmtp:
     def __init__(self):
@@ -275,7 +284,7 @@ class log2dyndns(object):
 # DEBUT DU SCRIPT
 import argparse
 
-def update_data(user,password,hostname,local_mail,remote_mail):
+def update_data(user,password,hostname,sendmail,local_mail,remote_mail):
     '''
 
         Recupere en entree le compte dyndns, le password et le nom de domaine a mettre a jour.
@@ -286,11 +295,24 @@ def update_data(user,password,hostname,local_mail,remote_mail):
     myupdate.setPassword(password)
     code_erreur = myupdate.doUpdate(hostname)
 
-    if local_mail != 'None' and remote_mail != 'None':
+    if sendmail:
         send_email = notifyBySmtp()
-        send_email.setLocalMailAddress(local_mail)
-        send_email.setRemoteMailAddress(remote_mail)
-        
+        config = configurationFile()
+        send_email.setSmtpServer(config.smtp_server)
+
+        if local_mail == 'None' and remote_mail == 'None':
+            send_email.setLocalMailAddress(local_mail)
+            send_email.setRemoteMailAddress(remote_mail)
+        elif local_mail == 'None' and remote_mail != 'None':
+            send_email.setLocalMailAddress(config.local_mail)
+            send_email.setRemoteMailAddress(remote_mail)
+        elif local_mail != 'None' and remote_mail == 'None':
+            send_email.setLocalMailAddress(local_mail)
+            send_email.setRemoteMailAddress(config.remote_mail)
+        else:    
+            send_email.setLocalMailAddress(config.local_mail)
+            send_email.setRemoteMailAddress(config.remote_mail)
+
         if re.search('Update successfull.*$',code_erreur):
             subject = 'Update of '+hostname+' successfull.'
         elif re.search('No need.*$',code_erreur):
@@ -370,6 +392,7 @@ def main():
     parser.add_argument('-U','--update', action="store_true", dest='update_hostname', help='update ip address of your host on dyndns (optionnal)', default='None')
     parser.add_argument('-L','--list', action="store_true", dest="listing", help="list hosts on your account (optionnal)", default=False)
     parser.add_argument('-F', '--file', action="store_true", dest="dictionnaire", help='use dictionnary, you need to create dyndns.conf file (optionnal)', default=False)
+    parser.add_argument('--sendmail', action="store_true", dest='sendmail', help='send email notification', default=False)
     parser.add_argument('--local_mail', action="store", dest='localmail', help='mail adress local', default='None')
     parser.add_argument('--remote_mail', action="store", dest='remotemail', help='mail adress remote', default='None')
 
@@ -378,7 +401,7 @@ def main():
     if args.dictionnaire == True:
         get_data_from_files(args.listing)
     elif args.update_hostname == True and args.hostname != 'None':
-      update_data(args.user,args.password,args.hostname,args.localmail,args.remotemail)
+      update_data(args.user,args.password,args.hostname,args.sendmail,args.localmail,args.remotemail)
     elif args.user == 'None' or args.password == 'None':
         print parser.parse_args(['-h'])
     else:
