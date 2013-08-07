@@ -270,7 +270,7 @@ class log2dyndns(object):
                 ip_addr = list_hostname[i+3]
                 last_seen = list_hostname[i+4]
                 last_seen = time.strptime(last_seen,"%b. %d, %Y %I:%M %p")
-                last_seen = time.strftime("%d/%m/%Y %H:%M UTC+5",last_seen)
+                last_seen = time.strftime("%d/%m/%Y %H:%M",last_seen)
 
                 reports += bcolors.OKGREEN+hostname.rjust(nombre_de_caracter_colonne1)+bcolors.ENDC
                 reports += bcolors.OKGREEN+ip_addr.rjust(nombre_de_caracter_colonne2)+bcolors.ENDC
@@ -281,6 +281,10 @@ class log2dyndns(object):
                 item += 1
 
             reports += bcolors.OKBLUE+nombre_de_tiret*"-"+bcolors.ENDC
+            reports += "\n"
+            reports += bcolors.WARNING+"The default timezone is GMT+5 when you create your account for the first"+bcolors.ENDC
+            reports += "\n"
+            reports += bcolors.WARNING+"time. Configure your timezone in the preference menu on dyndns.org."+bcolors.ENDC
             reports += "\n"
 
         return reports
