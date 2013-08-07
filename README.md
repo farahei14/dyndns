@@ -43,7 +43,3 @@ optional arguments:
   --remote_mail REMOTEMAIL
                         mail adress remote
 ```
-
-## Note
-
-Ce script a été écrit en grande partie par un potes et vue qu'il va mettre 10 ans pour se créer un compte, je host son projet chez moi.
