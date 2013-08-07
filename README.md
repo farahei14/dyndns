@@ -13,31 +13,38 @@ apt-get install python-beautifulsoup
 La configuration se fait dans le fichier dyndns.cfg et dans le fichier dyndns.conf pour les comptes.
 
 ## Utilisation
+
+Les options disponibles :
 ```bash
 $ ./dyndns
-usage: dyndns [-h] [-u USER] [-p PASSWORD] [-H HOSTNAME] [-C] [-D] [-U] [-L]
-              [-F] [--local_mail LOCALMAIL] [--remote_mail REMOTEMAIL]
+usage: dyndns.py [-h] [--all] [--debug] {connect,list,update} ...
 
 Manage your Dyndns Account.
 
+positional arguments:
+  {connect,list,update}
+                        sub-command help
+    connect             connect hostnames
+    list                listing hostnames
+    update              update hostnames
+
 optional arguments:
   -h, --help            show this help message and exit
-  -u USER, --user USER  dyndns account (required)
-  -p PASSWORD, --password PASSWORD
-                        dyndns password (required)
-  -H HOSTNAME, --hostname HOSTNAME
-                        dns domain name of your host (use only with --create,
-                        --delete, --update options)
-  -C, --create          create a domain name for your host on dyndns
-                        (optionnal)
-  -D, --delete          delete an existing domain name on your dyndns account
-                        (optionnal)
-  -U, --update          update ip address of your host on dyndns (optionnal)
-  -L, --list            list hosts on your account (optionnal)
-  -F, --file            use dictionnary, you need to create dyndns.conf file
-                        (optionnal)
-  --local_mail LOCALMAIL
-                        mail adress local
-  --remote_mail REMOTEMAIL
-                        mail adress remote
+  --all                 Options for all account
+  --debug               Debug mode
 ```
+Pour tester la validité d'un login/mot de passe :
+```bash
+./dyndns --all connect
+./dyndns connect -u USER -p PASSWORD
+```
+Pour lister les différentes machines d'un compte (ou de tout vos comptes):
+```bash
+./dyndns --all list
+./dyndns list -u USER -p PASSWORD
+```
+Pour mettre à jour un nom d'hôte :
+```bash
+./dyndns update -u USER -p PASSWORD -H example.dyndns.org
+```
+
