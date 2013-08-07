@@ -16,7 +16,8 @@ La configuration se fait dans le fichier dyndns.cfg et dans le fichier dyndns.co
 ```bash
 $ ./dyndns
 usage: dyndns [-h] [-u USER] [-p PASSWORD] [-H HOSTNAME] [-C] [-D] [-U] [-L]
-              [-F] [--local_mail LOCALMAIL] [--remote_mail REMOTEMAIL]
+              [-F] [--sendmail] [--local_mail LOCALMAIL]
+              [--remote_mail REMOTEMAIL]
 
 Manage your Dyndns Account.
 
@@ -36,6 +37,7 @@ optional arguments:
   -L, --list            list hosts on your account (optionnal)
   -F, --file            use dictionnary, you need to create dyndns.conf file
                         (optionnal)
+  --sendmail            send email notification
   --local_mail LOCALMAIL
                         mail adress local
   --remote_mail REMOTEMAIL
