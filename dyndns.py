@@ -426,7 +426,7 @@ def main():
     parser.add_argument('--debug', dest='debug_mode', action='store_true', help='Debug mode', default=False)
 
     # Creation des subparsers
-    subparsers = parser.add_subparsers(help='sub-command help',dest='name')
+    subparsers = parser.add_subparsers(dest='name')
 
     # Connect only
     connect = subparsers.add_parser('connect', help='connect hostnames')
