@@ -18,7 +18,12 @@ class configurationFile:
     def __init__(self):
         config = ConfigParser.RawConfigParser()
         config.read('dyndns.cfg')
+        # main configuration
         self.account_file = config.get('main', 'account_file')
+        self.warning_message = config.get('main','warning_message')
+        self.colorize_stdout = config.get('main','colorize_stdout')
+
+        # smtp configuration
         self.smtp_server = config.get('smtp', 'smtp_server')
         self.local_mail = config.get('smtp', 'local_mail')
         self.remote_mail = config.get('smtp', 'remote_mail')
@@ -28,6 +33,7 @@ class configurationFile:
         self.mail_text_change_ok = config.get('smtp', 'mail_text_change_ok')
         self.mail_text_no_change = config.get('smtp','mail_text_no_change')
         self.mail_text_on_error = config.get('smtp','mail_text_on_error')
+        self.auto_send_mail = config.get('smtp','auto_send_mail')
 
 class notifyBySmtp:
     def __init__(self):
@@ -238,30 +244,45 @@ class log2dyndns(object):
         # deconnexion
         self.br.follow_link(text='Log Out')
         mechanize.CookieJar.clear
+
+        # On recupere des parametres du fichier de configuration pour influencer la sortie standard
+        config = configurationFile()
         
+        # Ce parametre permet d'ajuster le nombre d'espace afin d'aligner le nom du compte a droite
+        # Celui-ci varie suivant l'affichage de la couleur ou pas etant donne que le calcule du positionnement
+        # est fait a partir du nombre de caractere de la zone d'affichage du compte. Si celui-ci affiche
+        # la couleur, le nombre de lettre affiche compte 27 lettres en plus.
+        ajusteur = 27
+
+        # Si la couleur est desactive dans le fichier de configuration, on affiche pas la couleur
+        couleur = bcolors()
+        if config.colorize_stdout == 'disable':
+            couleur.disable()
+            ajusteur = 0
+
         nombre_de_caracter_colonne1 = 24
         nombre_de_caracter_colonne2 = 20
         nombre_de_caracter_colonne3 = 30
         nombre_de_tiret = nombre_de_caracter_colonne1 + nombre_de_caracter_colonne2 + nombre_de_caracter_colonne3
 
         # affichage du nombre d'hote et de la liste de ces hotes
-        reports_nbhosts = bcolors.HEADER+self.account+" ["+bcolors.ENDC+bcolors.OKGREEN+str(count_host)+" hosts"+bcolors.ENDC+bcolors.HEADER+"]"+bcolors.ENDC
-        nombre_space = nombre_de_tiret-len(reports_nbhosts)+27
+        reports_nbhosts = couleur.HEADER+self.account+" ["+couleur.ENDC+couleur.OKGREEN+str(count_host)+" hosts"+couleur.ENDC+couleur.HEADER+"]"+couleur.ENDC
+        nombre_space = nombre_de_tiret-len(reports_nbhosts)+ajusteur
         if count_host > 0:
             print "\n"+nombre_space*" "+reports_nbhosts
         else:
-            print "\n"+bcolors.OKGREEN+"No hostname on "+self.account+bcolors.ENDC
+            print "\n"+couleur.OKGREEN+"No hostname on "+self.account+couleur.ENDC
 
         reports = ""
+
         if count_host > 0:
-            
-            reports += bcolors.OKBLUE+nombre_de_tiret*"-"+bcolors.ENDC
+            reports += couleur.OKBLUE+nombre_de_tiret*"-"+couleur.ENDC
             reports += "\n"
-            reports += bcolors.HEADER+'Hostname'.rjust(nombre_de_caracter_colonne1)+bcolors.ENDC
-            reports += bcolors.HEADER+'Ip address'.rjust(nombre_de_caracter_colonne2)+bcolors.ENDC
-            reports += bcolors.HEADER+'Last seen'.rjust(nombre_de_caracter_colonne3)+bcolors.ENDC
+            reports += couleur.HEADER+'Hostname'.rjust(nombre_de_caracter_colonne1)+couleur.ENDC
+            reports += couleur.HEADER+'Ip address'.rjust(nombre_de_caracter_colonne2)+couleur.ENDC
+            reports += couleur.HEADER+'Last seen'.rjust(nombre_de_caracter_colonne3)+couleur.ENDC
             reports += "\n"
-            reports += bcolors.OKBLUE+nombre_de_tiret*"-"+bcolors.ENDC
+            reports += couleur.OKBLUE+nombre_de_tiret*"-"+couleur.ENDC
             reports += "\n"
             item = 0
             i = 0
@@ -272,20 +293,21 @@ class log2dyndns(object):
                 last_seen = time.strptime(last_seen,"%b. %d, %Y %I:%M %p")
                 last_seen = time.strftime("%d/%m/%Y %H:%M",last_seen)
 
-                reports += bcolors.OKGREEN+hostname.rjust(nombre_de_caracter_colonne1)+bcolors.ENDC
-                reports += bcolors.OKGREEN+ip_addr.rjust(nombre_de_caracter_colonne2)+bcolors.ENDC
-                reports += bcolors.OKGREEN+last_seen.rjust(nombre_de_caracter_colonne3)+bcolors.ENDC
+                reports += couleur.OKGREEN+hostname.rjust(nombre_de_caracter_colonne1)+couleur.ENDC
+                reports += couleur.OKGREEN+ip_addr.rjust(nombre_de_caracter_colonne2)+couleur.ENDC
+                reports += couleur.OKGREEN+last_seen.rjust(nombre_de_caracter_colonne3)+couleur.ENDC
                 reports += "\n"
 
                 i += 5
                 item += 1
 
-            reports += bcolors.OKBLUE+nombre_de_tiret*"-"+bcolors.ENDC
+            reports += couleur.OKBLUE+nombre_de_tiret*"-"+couleur.ENDC
             reports += "\n"
-            reports += bcolors.WARNING+"The default timezone is GMT+5 when you create your account for the first"+bcolors.ENDC
-            reports += "\n"
-            reports += bcolors.WARNING+"time. Configure your timezone in the preference menu on dyndns.org."+bcolors.ENDC
-            reports += "\n"
+            if config.warning_message == 'enable':
+                reports += couleur.WARNING+"The default timezone is GMT+5 when you create your account for the first"+couleur.ENDC
+                reports += "\n"
+                reports += couleur.WARNING+"time. Configure your timezone in the preference menu on dyndns.org."+couleur.ENDC
+                reports += "\n"
         return reports
 
 # FIN DE LA CLASSE
@@ -304,9 +326,12 @@ def update_data(user,password,hostname,sendmail,local_mail,remote_mail):
     myupdate.setPassword(password)
     code_erreur = myupdate.doUpdate(hostname)
 
-    if sendmail:
+    config = configurationFile()
+    # On recupere la configuration du fichier de conf et on peut bypasser ce parametre par la ligne de commande
+    auto_send_mail = config.auto_send_mail
+
+    if sendmail or auto_send_mail == 'enable':
         send_email = notifyBySmtp()
-        config = configurationFile()
         send_email.setSmtpServer(config.smtp_server)
 
         if local_mail == 'None' and remote_mail == 'None':
