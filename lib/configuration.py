@@ -4,7 +4,7 @@
 
 import ConfigParser
 
-class ConfigurationFile():
+class ConfigurationFile(object):
     '''
         Class ConfigurationFile
     '''
