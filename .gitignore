@@ -1,3 +1,4 @@
 Makefile
 project
 lib/*.pyc
+*.pyc
