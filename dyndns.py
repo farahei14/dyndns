@@ -308,6 +308,8 @@ class log2dyndns(object):
                 reports += "\n"
                 reports += couleur.WARNING+"time. Configure your timezone in the preference menu on dyndns.org."+couleur.ENDC
                 reports += "\n"
+                reports += couleur.WARNING+"You can disable this warning on the configuration files."+couleur.ENDC
+                reports += "\n"
         return reports
 
 # FIN DE LA CLASSE
