@@ -10,7 +10,12 @@ apt-get install python-beautifulsoup
 ```
 
 ## Paramétrage
-La configuration se fait dans le fichier dyndns.cfg et dans le fichier account pour les comptes.Pour ce dernier, il est possible d'activer l'option gpg_enable. Celui-ci permet d'utiliser un fichier de compte chiffré. Pour obtenir un tel fichier veuillez vous reférez à la section "Sécurisation".
+La configuration se fait dans deux fichiers de configuration :
+
+- dyndns.cfg : fichier de configuration principal
+- account : fichier de configuration des comptes.
+
+Pour ce dernier, il est possible d'activer l'option gpg_enable dans le fichier de configuration principal. Celui-ci permet d'utiliser un fichier de compte chiffré. Pour obtenir un tel fichier veuillez vous reférez à la section "Sécurisation" plus bas.
 
 ## Utilisation
 
@@ -49,17 +54,17 @@ Pour mettre à jour un nom d'hôte :
 ```
 
 ## Sécurisation
-Avant d'aller plus loin, assurez vous d'avoir installer GnuPG. Suivant la distribution que vous utilisez, l'installation de ce logiciel sera plus au moins simplifié.
+Avant d'aller plus loin, assurez vous d'avoir installé GnuPG. Suivant la distribution que vous utilisez, l'installation de ce logiciel sera plus au moins simplifiée.
 
-Pour activer la sécurisation du fichier contenant vos comptes dyndns, il faut tout d'abord configurer les comptes dans le fichier account. Une fois, les comptes configurés, veuillez lancer la commande suivante pour y ajouter une passphrase.
+Pour activer la sécurisation du fichier contenant vos comptes dyndns, il faut tout d'abord configurer les comptes dans le fichier account "non chiffré". Une fois les comptes configurés, veuillez lancer la commande suivante pour y ajouter une passphrase.
 ```
 gpg --symmetric account
 ```
-Pour l'utilisation des clefs (donc sans mot de passe) :
+Pour l'utilisation des clefs (donc sans mot de passe), utilisez plutôt la commande suivante :
 ```
 gpg -e account -r VOTRE_CLEF
 ```
-N'oubliez pas de supprimer le fichier "account", celui-ci n'étant pas chiffré.
+N'oubliez pas de supprimer le fichier "account", une fois votre fichier account.gpg généré (celui-ci n'étant pas chiffré...).
 
 ## License
 
