@@ -1,5 +1,8 @@
+'''
+    tsss
+'''
 import re
-import mechanize 
+import mechanize
 from BeautifulSoup import BeautifulSoup
 import socket # pour interrogation dns
 import urllib # pour l'update, mechanize bug pour faire un simple get ...
@@ -25,7 +28,7 @@ class Log2DynDns(object):
         self.checkip_site = 'http://checkip.dyndns.org'
         self.account = ''
         self.password = ''
-        self.mechanize_object = ''
+        self.mechanize_object = mechanize.Browser()
         self.html = ''
 
     def set_account(self, account):
@@ -56,7 +59,7 @@ class Log2DynDns(object):
         '''
             Connect to dyndns website and log in with an account.
         '''
-        self.mechanize_object = mechanize.Browser()
+        
         self.mechanize_object.set_handle_robots(False)
         self.mechanize_object.set_handle_redirect(True)
         self.mechanize_object.set_handle_referer(True)
@@ -86,9 +89,9 @@ class Log2DynDns(object):
         br = mechanize.Browser()
         r = br.open(self.checkip_site)
         html = r.read()
-        current_ipaddress = re.sub(r'\n','',html)
-        current_ipaddress = re.sub(r'^.*: ','',current_ipaddress)
-        current_ipaddress = re.sub(r'<.*$','',current_ipaddress)
+        current_ipaddress = re.sub(r'\n', '', html)
+        current_ipaddress = re.sub(r'^.*: ', '', current_ipaddress)
+        current_ipaddress = re.sub(r'<.*$', '', current_ipaddress)
         resolv_dnsdomain = socket.gethostbyname(dnsdomainname)
 
         # check si on doit le faire pour ne pas incrementer le compteur
@@ -125,18 +128,25 @@ class Log2DynDns(object):
             else:
                 return code_erreur
 
-    def isConnect(self):
+    def is_connect(self):
+        '''
+            tsss
+        '''
         check_state = "False"
         resultat = self.html.split('\n')
-        regex = re.compile(r'(.*)Welcome(.*)'+self.account,re.IGNORECASE)
+        regex = re.compile(r'(.*)Welcome(.*)'+self.account, re.IGNORECASE)
         for ligne in resultat: 
             if regex.match(ligne):
                 check_state = "True"
                 break
         return check_state
 
-    def getState(self):
-        count_host = 0  #Initialise le compteur du nombre d'hote du compte dyndns
+    def get_state(self):
+        '''
+            Get state.
+        '''
+        #Initialise le compteur du nombre d'hote du compte dyndns
+        count_host = 0  
         req = self.mechanize_object.follow_link(text='My Hosts')
         data_html = req.read()
 
@@ -163,18 +173,25 @@ class Log2DynDns(object):
         self.mechanize_object.follow_link(text='Log Out')
         mechanize.CookieJar.clear
 
-        # On recupere des parametres du fichier de configuration pour influencer la sortie standard
+        # On recupere des parametres du fichier de configuration pour
+        # influencer la sortie standard
         config = ConfigurationFile()
+        config.read_configuration_file('etc/dyndns.cfg')
+        k = dict(config.get_main_configuration())
         
-        # Ce parametre permet d'ajuster le nombre d'espace afin d'aligner le nom du compte a droite
-        # Celui-ci varie suivant l'affichage de la couleur ou pas etant donne que le calcule du positionnement
-        # est fait a partir du nombre de caractere de la zone d'affichage du compte. Si celui-ci affiche
+        # Ce parametre permet d'ajuster le nombre d'espace afin d'aligner le
+        # nom du compte a droite
+        # Celui-ci varie suivant l'affichage de la couleur ou pas etant donne
+        # que le calcule du positionnement
+        # est fait a partir du nombre de caractere de la zone d'affichage du
+        # compte. Si celui-ci affiche
         # la couleur, le nombre de lettre affiche compte 27 lettres en plus.
         ajusteur = 27
 
-        # Si la couleur est desactive dans le fichier de configuration, on affiche pas la couleur
+        # Si la couleur est desactive dans le fichier de configuration, on
+        # affiche pas la couleur
         couleur = BColors()
-        if config.colorize_stdout == 'disable':
+        if k['colorize_stdout'] == 'disable':
             couleur.disable()
             ajusteur = 0
 
@@ -221,7 +238,7 @@ class Log2DynDns(object):
 
             reports += couleur.okblue+nombre_de_tiret*"-"+couleur.endc
             reports += "\n"
-            if config.warning_message == 'enable':
+            if k['warning_message'] == 'enable':
                 reports += couleur.WARNING+"The default timezone is GMT+5 when you create your account for the first"+couleur.endc
                 reports += "\n"
                 reports += couleur.WARNING+"time. Configure your timezone in the preference menu on dyndns.org."+couleur.endc
