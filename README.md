@@ -9,6 +9,13 @@ Ce projet utilise le module python mechanize. Sur une Debian, on l'installe de c
 ```bash
 apt-get install python-mechanize
 apt-get install python-beautifulsoup
+apt-get install python-gnupg
+```
+
+## Installation
+Pour installer ce script, il suffit de taper la commande suivante :
+```bash
+git clone https://github.com/farahei14/dyndns.git
 ```
 
 ## Paramétrage
