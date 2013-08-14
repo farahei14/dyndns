@@ -3,57 +3,77 @@
 '''
 
 import ConfigParser
+import cStringIO
+import gnupg
+import sys
 
 class ConfigurationFile(object):
     '''
         Class ConfigurationFile
     '''
     def __init__(self):
-        self.config = ConfigParser.RawConfigParser()
-        self.account_file = ''
-        self.warning_message = ''
-        self.colorize_stdout = ''
-        self.smtp_server = ''
-        self.sender_email = ''
-        self.recipient_email = ''
-        self.mail_subject_change_ok = ''
-        self.mail_subject_no_change = ''
-        self.mail_subject_on_error = ''
-        self.mail_text_change_ok = ''
-        self.mail_text_no_change = ''
-        self.mail_text_on_error = ''
-        self.auto_send_mail = ''
+        self.config = ''
+        self.account = ''
+        
 
-    def read_configuration_file(self):
+    def read_configuration_file(self, files):
         '''
             Read the configuration files.
         '''
-        self.config.read('dyndns.cfg')
+        self.config = ConfigParser.RawConfigParser()
+        self.config.readfp(open(files))
+
 
     def get_main_configuration(self):
         '''
             Get the main configuration.
         '''
-        self.account_file = self.config.get('main', 'account_file')
-        self.warning_message = self.config.get('main','warning_message')
-        self.colorize_stdout = self.config.get('main','colorize_stdout')        
+        return self.config.items('main')
+
+
     def get_smtp_configuration(self):
         '''
             Get the smtp configuration.
         '''
-        self.smtp_server = self.config.get('smtp', 'smtp_server')
-        self.sender_email = self.config.get('smtp', 'local_mail')
-        self.recipient_email = self.config.get('smtp', 'remote_mail')
-        self.mail_subject_change_ok = \
-        self.config.get('smtp', 'mail_subject_change_ok')
-        self.mail_subject_no_change = \
-        self.config.get('smtp','mail_subject_no_change')
-        self.mail_subject_on_error = \
-        self.config.get('smtp','mail_subject_on_error')
-        self.mail_text_change_ok = \
-        self.config.get('smtp', 'mail_text_change_ok')
-        self.mail_text_no_change = \
-        self.config.get('smtp','mail_text_no_change')
-        self.mail_text_on_error = self.config.get('smtp','mail_text_on_error')
-        self.auto_send_mail = self.config.get('smtp','auto_send_mail')
+        return self.config.items('smtp')
+
+
+    def read_account_file(self, account_file):
+        '''
+            Read the account file.
+        '''
+        self.account = ConfigParser.RawConfigParser()
+        self.account.readfp(open(account_file))
+
+
+    def get_account(self):
+        '''
+            Get the account data.
+        '''
+        return self.account.items('account')
+
+
+    def read_account_file_gpg(self, account_file, password):
+        '''
+            Read the account file from a gnupg encrypt file.
+        ''' 
+        gpg_file = open(account_file, "rb")
+        gpg = gnupg.GPG()
+        if not password:
+            print "No password ? I'm using you keystore then ..."
+            password = None
+        data = str(gpg.decrypt_file(gpg_file, passphrase=password))
+
+        if not data:
+            print("Incorrect passphrase.")
+            sys.exit(1)
+
+        self.account = ConfigParser.RawConfigParser()
+        self.account.readfp(cStringIO.StringIO(data))
+
+    def get_account_gpg(self):
+        '''
+            Get the account data.
+        '''
+        return self.account.items('account')
 

@@ -1,17 +1,19 @@
 #!/usr/bin/python
-#
+'''
+    Ce script permet de manager vos comptes dyndns.
+'''
 from lib.notify import NotifyBySmtp
 from lib.configuration import ConfigurationFile
 from lib.colorize import BColors
 from lib.log2dyndns import Log2DynDns
 
 import argparse
+import re
+import getpass
 
-def update_data(user,password,hostname,sendmail,local_mail,remote_mail):
+def update_data(user, password, hostname):
     '''
-
-        Recupere en entree le compte dyndns, le password et le nom de domaine a mettre a jour.
-
+        Update ip address for a dyndns host.
     '''
     myupdate = Log2DynDns()
     myupdate.set_account(user)
@@ -19,59 +21,46 @@ def update_data(user,password,hostname,sendmail,local_mail,remote_mail):
     code_erreur = myupdate.do_update(hostname)
 
     config = ConfigurationFile()
-    # On recupere la configuration du fichier de conf et on peut bypasser ce parametre par la ligne de commande
-    auto_send_mail = config.auto_send_mail
+    config.read_configuration_file('etc/dyndns.cfg')
+    k = dict(config.get_smtp_configuration())
 
-    if sendmail or auto_send_mail == 'enable':
-        send_email = NotifyBySmtp()
-        send_email.set_smtp_server(config.smtp_server)
-
-        if local_mail == 'None' and remote_mail == 'None':
-            send_email.set_sender_email(config.local_mail)
-            send_email.set_recipient_email(config.remote_mail)
-        elif local_mail == 'None' and remote_mail != 'None':
-            send_email.set_sender_email(config.local_mail)
-            send_email.set_recipient_email(remote_mail)
-        elif local_mail != 'None' and remote_mail == 'None':
-            send_email.set_sender_email(local_mail)
-            send_email.set_recipient_email(config.remote_mail)
-        else:    
-            send_email.set_sender_email(local_mail)
-            send_email.set_recipient_email(remote_mail)
-
-        if re.search('Update successfull.*$',code_erreur):
-            subject = config.mail_subject_change_ok
-            message = config.mail_text_change_ok
-        elif re.search('No need.*$',code_erreur):
-            subject = config.mail_subject_no_change
-            message = config.mail_text_no_change
+    if k['auto_send_mail'] == 'enable':
+        if re.search('Update successfull.*$', code_erreur):
+            subject = k['mail_subject_change_ok']
+            message = k['mail_text_change_ok']
+        elif re.search('No need.*$', code_erreur):
+            subject = k['mail_subject_no_change']
+            message = k['mail_text_no_change']
         else:
-            subject = config.mail_subject_on_error
-            message = config.mail_text_on_error
+            subject = k['mail_subject_on_error']
+            message = k['mail_text_on_error']
 
-        # je n'ai pas l'adresse ip, je dois la calculer a partir du code d'erreur
-        ip_addr = re.sub(r'^.* is ','',code_erreur)
-        ip_addr = re.sub(r' for.*$','',ip_addr)
+        # je n'ai pas l'adresse ip, je dois la calculer a partir du code
+        # d'erreur
+        ip_addr = re.sub(r'^.* is ', '', code_erreur)
+        ip_addr = re.sub(r' for.*$', '', ip_addr)
 
         # prise en compte des templates
-        subject = re.sub(r'{hostname}',hostname,subject)
-        subject = re.sub(r'{ip}',ip_addr,subject)
-        message = re.sub(r'{hostname}',hostname,message)
-        message = re.sub(r'{ip}',ip_addr,message)
-        message = re.sub(r'\\n','\n',message)
+        subject = re.sub(r'{hostname}', hostname, subject)
+        subject = re.sub(r'{ip}', ip_addr, subject)
+        message = re.sub(r'{hostname}', hostname, message)
+        message = re.sub(r'{ip}', ip_addr, message)
+        message = re.sub(r'\\n', '\n', message)
         message = message+"\n\nLog :\n"+code_erreur
 
+        send_email = NotifyBySmtp()
+        send_email.set_smtp_server(k['smtp_server'])
+        send_email.set_sender_email(k['local_mail'])
+        send_email.set_recipient_email(k['remote_mail'])
         send_email.set_subject(subject)
         send_email.set_content(message)
         send_email.sendmail()
-
     print code_erreur
 
-def get_data(user,password,listing):
+
+def get_data(user, password, listing):
     '''
-
-        Recupere en entree le compte dydns, le password et le parametre listing (qui permet de lancer la procedure de listing ou pas).
-
+        Get data from a dyndns account.
     '''
     if listing == 'list':
         listing = True
@@ -84,65 +73,82 @@ def get_data(user,password,listing):
     laclass.set_password(password)
     laclass.do_connect()
 
-    bcolors = BColors
+    config = ConfigurationFile()
+    config.read_configuration_file('etc/dyndns.cfg')
+    k = dict(config.get_main_configuration())
 
-    if laclass.isConnect() == "True":
+    couleur = BColors()
+    if k['colorize_stdout'] == 'disable':
+        couleur.disable()
+
+    if laclass.is_connect() == "True":
         if listing == True:
-            print laclass.getState()
+            print laclass.get_state()
         else:
-            print bcolors.okgreen+"Successfully connected with "+laclass.get_account()+bcolors.endc
+            mess = "Successfully connected with "
+            print couleur.okgreen+mess+laclass.get_account()+couleur.endc
     else:
-        print bcolors.FAIL+"Can't retrieve data with user "+laclass.get_account()+". Wrong login or password."+bcolors.endc
+        mess = "Can't retrieve data with user "
+        mess2 = ". Wrong login or password."
+        print couleur.fail+mess+laclass.get_account()+mess2+couleur.endc
+
 
 def get_data_from_files(listing):
     '''
-
-        Lit le fichier dyndns.conf et recurpere les couples login/password pour les envoyer a la fonction get_data.
-
+        Get data for all dydns account based on your configuration file.
     '''
-    comptes = {}
+    accounts = ConfigurationFile()
+    accounts.read_configuration_file('etc/dyndns.cfg')
+    k = dict(accounts.get_main_configuration())
 
-    file = open("etc/dyndns.conf")
-    while 1:
-        lines = file.readlines(100000)
-        if not lines:
-            break
-        for line in lines:
-            # je passe les lignes de commentaires du fichier de parametre
-            if re.search('^#.*$',line):
-                continue
-            # je passe les lignes vides
-            if re.search('^\n',line):
-                continue
-            account = re.sub(':.*','',line)
-            account = re.sub(r'\'','',account)
-            account = re.sub(r'\n','',account)
-            password = re.sub('^.*:','',line)
-            password = re.sub(r'\'','',password)
-            password = re.sub(r'\n','',password)
-            comptes[account] = password
-    for compte, password in comptes.items():
-        get_data(compte,password,listing)
+    account_file_configuration_path = k['account_file']
+
+    if k['gpg_enable'] == 'true':
+        print 'gpg is enable on your configuration file.'
+        prompt = 'Please type your passphrase : '
+        passphrase = getpass.getpass(prompt)
+        accounts.read_account_file_gpg(account_file_configuration_path, 
+            passphrase)
+        accounts_list = accounts.get_account_gpg()
+    else:
+        accounts.read_account_file(account_file_configuration_path)
+        accounts_list = accounts.get_account()
+
+    for compte, password in accounts_list:
+        get_data(compte, password, listing)
+
 
 def debug_mode(args):
+    '''
+        Active debug mode when needed.
+    '''
     if args.debug_mode:
-        print bcolors.WARNING+'\n'+str(args)+bcolors.endc
+        bcolors = BColors
+        print bcolors.warning+'\n'+str(args)+bcolors.endc
+
 
 def print_authentication(subparsers):
-    subparsers.add_argument('-u', dest='username', action='store', help='dyndns account', default='None')
-    subparsers.add_argument('-p', dest='password', action='store', help='dyndns account password', default='None')
+    '''
+        Add subparser for user/password to any parser who need it.
+    '''    
+    subparsers.add_argument('-u', dest='username', action='store',
+        help='dyndns account', default='None')
+    subparsers.add_argument('-p', dest='password', action='store',
+        help='dyndns account password', default='None')
+
 
 def main():
     '''
-
-        La fonction principale permet d'aiguiller les options de la ligne de commande aux fonctions intermediaires.
-
+        Main function.
     '''
-    parser = argparse.ArgumentParser(add_help=True,description='Manage your Dyndns Account.')
+    parser = argparse.ArgumentParser(add_help=True, 
+        description='Manage your Dyndns Account.')
     
     # Options globales
-    parser.add_argument('--all', dest='all', action='store_true', help='Options for all account', default=False)
-    parser.add_argument('--debug', dest='debug_mode', action='store_true', help='Debug mode', default=False)
+    parser.add_argument('--all', dest='all', action='store_true',
+        help='Options for all account', default=False)
+    parser.add_argument('--debug', dest='debug_mode', action='store_true',
+        help='Debug mode', default=False)
 
     # Creation des subparsers
     subparsers = parser.add_subparsers(dest='name')
@@ -154,16 +160,11 @@ def main():
     # List hostname
     listing = subparsers.add_parser('list', help='listing hostnames')
     print_authentication(listing)
-
     # Update hostname
     update = subparsers.add_parser('update', help='update hostnames')
     print_authentication(update)
-    update.add_argument('-H', dest='hostname', action='store', help='dyndns hostname', default='None')
-
-    # Mettre ces parametres dans le fichier de configuration
-    update.add_argument('--notify', dest='sendmail', action='store_true', help='notify by mail', default=False)
-    update.add_argument('--local_mail', dest='local_mail', action='store', help='sender email address', default='None')
-    update.add_argument('--remote_mail', dest='remote_mail', action='store', help='recipient email address', default='None')
+    update.add_argument('-H', dest='hostname', action='store',
+        help='dyndns hostname', default='None')
 
     args = parser.parse_args()
 
@@ -175,10 +176,10 @@ def main():
         print "Can't do that ..."
     elif args.all == False and args.name == 'update':
         debug_mode(args)
-        update_data(args.username,args.password,args.hostname,args.sendmail,args.local_mail,args.remote_mail)
+        update_data(args.username, args.password, args.hostname)
     else:
         debug_mode(args)
-        get_data(args.username,args.password,args.name)
+        get_data(args.username, args.password, args.name)
 
 
 if __name__ == "__main__":
