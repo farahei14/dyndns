@@ -3,6 +3,9 @@
 '''
 
 import ConfigParser
+import cStringIO
+import gnupg
+import sys
 
 class ConfigurationFile(object):
     '''
@@ -48,3 +51,29 @@ class ConfigurationFile(object):
             Get the account data.
         '''
         return self.account.items('account')
+
+
+    def read_account_file_gpg(self, account_file, password):
+        '''
+            Read the account file from a gnupg encrypt file.
+        ''' 
+        gpg_file = open(account_file, "rb")
+        gpg = gnupg.GPG()
+        if not password:
+            print "No password ? I'm using you keystore then ..."
+            password = None
+        data = str(gpg.decrypt_file(gpg_file, passphrase=password))
+
+        if not data:
+            print("Incorrect passphrase.")
+            sys.exit(1)
+
+        self.account = ConfigParser.RawConfigParser()
+        self.account.readfp(cStringIO.StringIO(data))
+
+    def get_account_gpg(self):
+        '''
+            Get the account data.
+        '''
+        return self.account.items('account')
+

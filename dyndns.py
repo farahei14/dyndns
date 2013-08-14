@@ -9,6 +9,7 @@ from lib.log2dyndns import Log2DynDns
 
 import argparse
 import re
+import getpass
 
 def update_data(user, password, hostname):
     '''
@@ -99,10 +100,21 @@ def get_data_from_files(listing):
     accounts = ConfigurationFile()
     accounts.read_configuration_file('etc/dyndns.cfg')
     k = dict(accounts.get_main_configuration())
-    account_file_configuration_path = 'etc/'+k['account_file']
-    accounts.read_account_file(account_file_configuration_path)
 
-    for compte, password in accounts.get_account():
+    account_file_configuration_path = k['account_file']
+
+    if k['gpg_enable'] == 'true':
+        print 'gpg is enable on your configuration file.'
+        prompt = 'Please type your passphrase : '
+        passphrase = getpass.getpass(prompt)
+        accounts.read_account_file_gpg(account_file_configuration_path, 
+            passphrase)
+        accounts_list = accounts.get_account_gpg()
+    else:
+        accounts.read_account_file(account_file_configuration_path)
+        accounts_list = accounts.get_account()
+
+    for compte, password in accounts_list:
         get_data(compte, password, listing)
 
 
@@ -148,7 +160,6 @@ def main():
     # List hostname
     listing = subparsers.add_parser('list', help='listing hostnames')
     print_authentication(listing)
-
     # Update hostname
     update = subparsers.add_parser('update', help='update hostnames')
     print_authentication(update)
