@@ -1,2 +1,4 @@
 Makefile
-dyndns.sublime*
+project
+lib/*.pyc
+*.pyc
