@@ -97,7 +97,11 @@ def get_data_from_files(listing):
         Get data for all dydns account based on your configuration file.
     '''
     accounts = ConfigurationFile()
-    accounts.read_account_file('etc/dyndns.conf')
+    accounts.read_configuration_file('etc/dyndns.cfg')
+    k = dict(accounts.get_main_configuration())
+    account_file_configuration_path = 'etc/'+k['account_file']
+    accounts.read_account_file(account_file_configuration_path)
+
     for compte, password in accounts.get_account():
         get_data(compte, password, listing)
 
