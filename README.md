@@ -10,7 +10,7 @@ apt-get install python-beautifulsoup
 ```
 
 ## Paramétrage
-La configuration se fait dans le fichier dyndns.cfg et dans le fichier dyndns.conf pour les comptes.
+La configuration se fait dans le fichier dyndns.cfg et dans le fichier account pour les comptes.Pour ce dernier, il est possible d'activer l'option gpg_enable. Celui-ci permet d'utiliser un fichier de compte chiffré. Pour obtenir un tel fichier veuillez vous reférez à la section "Sécurisation".
 
 ## Utilisation
 
@@ -47,6 +47,19 @@ Pour mettre à jour un nom d'hôte :
 ```bash
 ./dyndns update -u USER -p PASSWORD -H example.dyndns.org
 ```
+
+## Sécurisation
+Avant d'aller plus loin, assurez vous d'avoir installer GnuPG. Suivant la distribution que vous utilisez, l'installation de ce logiciel sera plus au moins simplifié.
+
+Pour activer la sécurisation du fichier contenant vos comptes dyndns, il faut tout d'abord configurer les comptes dans le fichier account. Une fois, les comptes configurés, veuillez lancer la commande suivante pour y ajouter une passphrase.
+```
+gpg --symmetric account
+```
+Pour l'utilisation des clefs (donc sans mot de passe) :
+```
+gpg -e account -r VOTRE_CLEF
+```
+N'oubliez pas de supprimer le fichier "account", celui-ci n'étant pas chiffré.
 
 ## License
 
