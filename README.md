@@ -1,12 +1,21 @@
 # Dyndns
 
-Ce script permet de gérer l'ensemble de vos comptes dyndns.
+Ce script permet de gérer l'ensemble de vos comptes dyndns. Il permet de lister les hôtes de plusieurs comptes, de tester les connexions à vos comptes dyndns et, accessoirement, de mettre à jour votre nom d'hôte avec votre adresse IP dynamique.
+
+![Screenshot](screens/screenshot.png)
 
 ## Pré-requis
 Ce projet utilise le module python mechanize. Sur une Debian, on l'installe de cette manière :
 ```bash
 apt-get install python-mechanize
 apt-get install python-beautifulsoup
+apt-get install python-gnupg
+```
+
+## Installation
+Pour installer ce script, il suffit de taper la commande suivante :
+```bash
+git clone https://github.com/farahei14/dyndns.git
 ```
 
 ## Paramétrage

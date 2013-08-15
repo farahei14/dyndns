@@ -3,6 +3,7 @@
 '''
 import re
 import mechanize
+from mechanize import Browser
 from BeautifulSoup import BeautifulSoup
 import socket # pour interrogation dns
 import urllib # pour l'update, mechanize bug pour faire un simple get ...
@@ -23,13 +24,13 @@ class Log2DynDns(object):
         '''
             Log2DynDns constructor.
         '''
-        self.version = '1.0'
         self.account_site = 'https://account.dyn.com'
         self.checkip_site = 'http://checkip.dyndns.org'
         self.account = ''
         self.password = ''
-        self.mechanize_object = mechanize.Browser()
+        self.mechanize_object = Browser()
         self.html = ''
+
 
     def set_account(self, account):
         '''
@@ -37,11 +38,13 @@ class Log2DynDns(object):
         '''
         self.account = account
 
+
     def get_account(self):
         '''
             Return the password.
         '''
         return self.account
+
 
     def set_password(self, password):
         '''
@@ -49,17 +52,18 @@ class Log2DynDns(object):
         '''
         self.password = password
 
+
     def set_site(self, site):
         '''
             Set the website of dyndns.
         '''
         self.account_site = site
 
+
     def do_connect(self):
         '''
             Connect to dyndns website and log in with an account.
         '''
-        
         self.mechanize_object.set_handle_robots(False)
         self.mechanize_object.set_handle_redirect(True)
         self.mechanize_object.set_handle_referer(True)
@@ -76,6 +80,7 @@ class Log2DynDns(object):
         self.mechanize_object.form['password'] = self.password
         self.html = self.mechanize_object.submit().read()
 
+
     def do_update(self, dnsdomainname):
         '''
             Update dyndns hostname.
@@ -86,8 +91,8 @@ class Log2DynDns(object):
         # si maj non ok -> authentification ?
         # si maj non ok -> je recommence 3 fois toute les 5 secondes et
         # notification
-        br = mechanize.Browser()
-        r = br.open(self.checkip_site)
+        br_test = Browser()
+        r = br_test.open(self.checkip_site)
         html = r.read()
         current_ipaddress = re.sub(r'\n', '', html)
         current_ipaddress = re.sub(r'^.*: ', '', current_ipaddress)
@@ -128,6 +133,7 @@ class Log2DynDns(object):
             else:
                 return code_erreur
 
+
     def is_connect(self):
         '''
             tsss
@@ -141,12 +147,11 @@ class Log2DynDns(object):
                 break
         return check_state
 
-    def get_state(self):
+
+    def get_hosts(self):
         '''
             Get state.
         '''
-        #Initialise le compteur du nombre d'hote du compte dyndns
-        count_host = 0  
         req = self.mechanize_object.follow_link(text='My Hosts')
         data_html = req.read()
 
@@ -154,24 +159,42 @@ class Log2DynDns(object):
             soup = BeautifulSoup(data_html)
             table = soup.find('table', id='dyndnshostnames')
             rows = table.findAll('tr')
-            list_hostname = list()
+            list_host = list()
 
             for tr in rows:
                 cols = tr.findAll('td')
-                for td in cols:
-                    text = td.find(text=True)
-                    text2 = text.strip("\r\n")
-                    text = str(text2).replace("\r"," ").replace("\n"," ").replace("\r\n"," ")
-                    #print text
-                    list_hostname.append(text)
-                count_host += 1
-            # retirer 2 au nombre d'hote compte afin d'exclure les lignes dyndns
-            # hostnames et l'entete du tableau
-            count_host -= 2
+
+                # transformation
+                info = re.sub(r'\r', ' ', str(cols))
+                info = re.sub(r'\r\n', ' ', info)
+                info = re.sub(r'\n', ' ', info)
+                info = re.sub(r'<td>', '', info)
+                info = re.sub(r'</td>', '', info)
+                info = re.sub(r'<td.*id">', '', info)
+                info = re.sub(r'<a .*.org">', '', info)
+                info = re.sub(r'</a>', '', info)
+                info = re.sub(r'<td.*t , ', '', info)
+                info = re.sub(r'\[', '', info)
+                info = re.sub(r'\]', '', info)
+                
+                if info == '':
+                    pass
+                else:
+                    info = tuple(info.split(', '))
+                    list_host.append(info)
 
         # deconnexion
         self.mechanize_object.follow_link(text='Log Out')
         mechanize.CookieJar.clear
+
+        return list_host
+
+
+    def get_state(self):
+        list_hostname = self.get_hosts()
+        list_hostname = sorted(list_hostname, key=lambda tup: tup[3],
+            reverse = True)
+        count_host = len(list_hostname)
 
         # On recupere des parametres du fichier de configuration pour
         # influencer la sortie standard
@@ -195,52 +218,50 @@ class Log2DynDns(object):
             couleur.disable()
             ajusteur = 0
 
-        nombre_de_caracter_colonne1 = 24
-        nombre_de_caracter_colonne2 = 20
-        nombre_de_caracter_colonne3 = 30
-        nombre_de_tiret = nombre_de_caracter_colonne1 + nombre_de_caracter_colonne2 + nombre_de_caracter_colonne3
+        nb_char_c1 = 24
+        nb_char_c2 = 20
+        nb_char_c3 = 30
+        nb_tiret = nb_char_c1 + nb_char_c2 + nb_char_c3
 
         # affichage du nombre d'hote et de la liste de ces hotes
-        reports_nbhosts = couleur.header+self.account+" ["+couleur.endc+couleur.okgreen+str(count_host)+" hosts"+couleur.endc+couleur.header+"]"+couleur.endc
-        nombre_space = nombre_de_tiret-len(reports_nbhosts)+ajusteur
+        nb_host = couleur.header+self.account+" ["+couleur.endc+couleur.okgreen+str(count_host)+" hosts"+couleur.endc+couleur.header+"]"+couleur.endc
+        nombre_space = nb_tiret-len(nb_host)+ajusteur
         if count_host > 0:
-            print "\n"+nombre_space*" "+reports_nbhosts
+            print "\n"+nombre_space*" "+nb_host
         else:
             print "\n"+couleur.okgreen+"No hostname on "+self.account+couleur.endc
 
         reports = ""
 
         if count_host > 0:
-            reports += couleur.okblue+nombre_de_tiret*"-"+couleur.endc
+            reports += couleur.okblue+nb_tiret*"-"+couleur.endc
             reports += "\n"
-            reports += couleur.header+'Hostname'.rjust(nombre_de_caracter_colonne1)+couleur.endc
-            reports += couleur.header+'Ip address'.rjust(nombre_de_caracter_colonne2)+couleur.endc
-            reports += couleur.header+'Last seen'.rjust(nombre_de_caracter_colonne3)+couleur.endc
+            reports += couleur.header+'Hostname'.rjust(nb_char_c1)+couleur.endc
+            reports += couleur.header+'Ip address'.rjust(nb_char_c2)
+            reports += couleur.endc
+            reports += couleur.header+'Last seen'.rjust(nb_char_c3)+couleur.endc
             reports += "\n"
-            reports += couleur.okblue+nombre_de_tiret*"-"+couleur.endc
+            reports += couleur.okblue+nb_tiret*"-"+couleur.endc
             reports += "\n"
-            item = 0
-            i = 0
-            while item < count_host:
-                hostname = list_hostname[i+1]
-                ip_addr = list_hostname[i+3]
-                last_seen = list_hostname[i+4]
-                last_seen = time.strptime(last_seen,"%b. %d, %Y %I:%M %p")
-                last_seen = time.strftime("%d/%m/%Y %H:%M",last_seen)
 
-                reports += couleur.okgreen+hostname.rjust(nombre_de_caracter_colonne1)+couleur.endc
-                reports += couleur.okgreen+ip_addr.rjust(nombre_de_caracter_colonne2)+couleur.endc
-                reports += couleur.okgreen+last_seen.rjust(nombre_de_caracter_colonne3)+couleur.endc
+            for identifiant, hostname, ip_addr, date1, date2 in list_hostname: 
+                last_seen = date1+' '+date2
+                last_seen = time.strptime(last_seen,"%b. %d %Y %I:%M %p")
+                last_seen = time.strftime("%d/%m/%Y %H:%M", last_seen)
+
+                reports += couleur.okgreen+hostname.rjust(nb_char_c1)
+                reports += couleur.endc
+                reports += couleur.okgreen+ip_addr.rjust(nb_char_c2)
+                reports += couleur.endc
+                reports += couleur.okgreen+last_seen.rjust(nb_char_c3)
+                reports += couleur.endc
                 reports += "\n"
 
-                i += 5
-                item += 1
-
-            reports += couleur.okblue+nombre_de_tiret*"-"+couleur.endc
+            reports += couleur.okblue+nb_tiret*"-"+couleur.endc
             reports += "\n"
             if k['warning_message'] == 'enable':
-                reports += couleur.WARNING+"The default timezone is GMT+5 when you create your account for the first"+couleur.endc
+                reports += couleur.warning+"The default timezone is GMT+5 when you create your account for the first"+couleur.endc
                 reports += "\n"
-                reports += couleur.WARNING+"time. Configure your timezone in the preference menu on dyndns.org."+couleur.endc
+                reports += couleur.warning+"time. Configure your timezone in the preference menu on dyndns.org."+couleur.endc
                 reports += "\n"
         return reports
