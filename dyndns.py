@@ -10,7 +10,7 @@ from lib.log2dyndns import Log2DynDns
 import argparse
 import re
 import getpass
-import time # pour ameliorer le format de la date
+import time
 
 def update_data(user, password, hostname):
     '''
@@ -70,8 +70,7 @@ def get_state(user, password):
     laclass.do_connect()
 
     list_hostname = laclass.get_hosts()
-    list_hostname = sorted(list_hostname, key=lambda tup: tup[3],
-        reverse = True)
+    list_hostname = sorted(list_hostname, key=lambda tup: tup[3])
     count_host = len(list_hostname)
 
     # On recupere des parametres du fichier de configuration pour
@@ -122,11 +121,9 @@ def get_state(user, password):
         reports += couleur.okblue+nb_tiret*"-"+couleur.endc
         reports += "\n"
 
-        for identifiant, hostname, ip_addr, date1, date2 in list_hostname: 
-            last_seen = date1+' '+date2
-            last_seen = time.strptime(last_seen,"%b. %d %Y %I:%M %p")
+        for identifiant, hostname, ip_addr, last_seen in list_hostname: 
+            last_seen = time.strptime(last_seen,"%m/%d/%Y %H:%M")
             last_seen = time.strftime("%d/%m/%Y %H:%M", last_seen)
-
             reports += couleur.okgreen+hostname.rjust(nb_char_c1)
             reports += couleur.endc
             reports += couleur.okgreen+ip_addr.rjust(nb_char_c2)

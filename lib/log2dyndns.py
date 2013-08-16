@@ -7,6 +7,7 @@ from mechanize import Browser
 from BeautifulSoup import BeautifulSoup
 import socket # pour interrogation dns
 import urllib # pour l'update, mechanize bug pour faire un simple get ...
+import time # pour ameliorer le format de la date
 
 class Log2DynDns(object):
     '''
@@ -178,11 +179,18 @@ class Log2DynDns(object):
                     pass
                 else:
                     info = tuple(info.split(', '))
+                    data = info[0]+','+info[1]+','+info[2]
+                    last_seen = info[3]+' '+info[4]
+                    last_seen = time.strptime(last_seen,"%b. %d %Y %I:%M %p")
+                    last_seen = time.strftime("%m/%d/%Y %H:%M", last_seen)
+                    merge = data+','+last_seen
+                    info = tuple(merge.split(','))
                     list_host.append(info)
 
         # deconnexion
         self.mechanize_object.follow_link(text='Log Out')
         mechanize.CookieJar.clear
 
+        print list_host
         return list_host
 
