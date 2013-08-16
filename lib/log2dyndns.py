@@ -191,6 +191,5 @@ class Log2DynDns(object):
         self.mechanize_object.follow_link(text='Log Out')
         mechanize.CookieJar.clear
 
-        print list_host
         return list_host
 
