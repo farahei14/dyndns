@@ -8,8 +8,6 @@ from BeautifulSoup import BeautifulSoup
 import socket # pour interrogation dns
 import urllib # pour l'update, mechanize bug pour faire un simple get ...
 import time # pour ameliorer le format de la date
-from configuration import ConfigurationFile
-from colorize import BColors
 
 class Log2DynDns(object):
     '''
@@ -181,6 +179,12 @@ class Log2DynDns(object):
                     pass
                 else:
                     info = tuple(info.split(', '))
+                    data = info[0]+','+info[1]+','+info[2]
+                    last_seen = info[3]+' '+info[4]
+                    last_seen = time.strptime(last_seen,"%b. %d %Y %I:%M %p")
+                    last_seen = time.strftime("%m/%d/%Y %H:%M", last_seen)
+                    merge = data+','+last_seen
+                    info = tuple(merge.split(','))
                     list_host.append(info)
 
         # deconnexion
@@ -189,79 +193,3 @@ class Log2DynDns(object):
 
         return list_host
 
-
-    def get_state(self):
-        list_hostname = self.get_hosts()
-        list_hostname = sorted(list_hostname, key=lambda tup: tup[3],
-            reverse = True)
-        count_host = len(list_hostname)
-
-        # On recupere des parametres du fichier de configuration pour
-        # influencer la sortie standard
-        config = ConfigurationFile()
-        config.read_configuration_file('etc/dyndns.cfg')
-        k = dict(config.get_main_configuration())
-        
-        # Ce parametre permet d'ajuster le nombre d'espace afin d'aligner le
-        # nom du compte a droite
-        # Celui-ci varie suivant l'affichage de la couleur ou pas etant donne
-        # que le calcule du positionnement
-        # est fait a partir du nombre de caractere de la zone d'affichage du
-        # compte. Si celui-ci affiche
-        # la couleur, le nombre de lettre affiche compte 27 lettres en plus.
-        ajusteur = 27
-
-        # Si la couleur est desactive dans le fichier de configuration, on
-        # affiche pas la couleur
-        couleur = BColors()
-        if k['colorize_stdout'] == 'disable':
-            couleur.disable()
-            ajusteur = 0
-
-        nb_char_c1 = 24
-        nb_char_c2 = 20
-        nb_char_c3 = 30
-        nb_tiret = nb_char_c1 + nb_char_c2 + nb_char_c3
-
-        # affichage du nombre d'hote et de la liste de ces hotes
-        nb_host = couleur.header+self.account+" ["+couleur.endc+couleur.okgreen+str(count_host)+" hosts"+couleur.endc+couleur.header+"]"+couleur.endc
-        nombre_space = nb_tiret-len(nb_host)+ajusteur
-        if count_host > 0:
-            print "\n"+nombre_space*" "+nb_host
-        else:
-            print "\n"+couleur.okgreen+"No hostname on "+self.account+couleur.endc
-
-        reports = ""
-
-        if count_host > 0:
-            reports += couleur.okblue+nb_tiret*"-"+couleur.endc
-            reports += "\n"
-            reports += couleur.header+'Hostname'.rjust(nb_char_c1)+couleur.endc
-            reports += couleur.header+'Ip address'.rjust(nb_char_c2)
-            reports += couleur.endc
-            reports += couleur.header+'Last seen'.rjust(nb_char_c3)+couleur.endc
-            reports += "\n"
-            reports += couleur.okblue+nb_tiret*"-"+couleur.endc
-            reports += "\n"
-
-            for identifiant, hostname, ip_addr, date1, date2 in list_hostname: 
-                last_seen = date1+' '+date2
-                last_seen = time.strptime(last_seen,"%b. %d %Y %I:%M %p")
-                last_seen = time.strftime("%d/%m/%Y %H:%M", last_seen)
-
-                reports += couleur.okgreen+hostname.rjust(nb_char_c1)
-                reports += couleur.endc
-                reports += couleur.okgreen+ip_addr.rjust(nb_char_c2)
-                reports += couleur.endc
-                reports += couleur.okgreen+last_seen.rjust(nb_char_c3)
-                reports += couleur.endc
-                reports += "\n"
-
-            reports += couleur.okblue+nb_tiret*"-"+couleur.endc
-            reports += "\n"
-            if k['warning_message'] == 'enable':
-                reports += couleur.warning+"The default timezone is GMT+5 when you create your account for the first"+couleur.endc
-                reports += "\n"
-                reports += couleur.warning+"time. Configure your timezone in the preference menu on dyndns.org."+couleur.endc
-                reports += "\n"
-        return reports
